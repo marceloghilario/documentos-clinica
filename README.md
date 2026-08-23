@@ -46,7 +46,8 @@ npm run dev
 
 Variável de ambiente do frontend:
 
-- `VITE_API_URL`: URL base da HTTP API do backend.
+- `VITE_API_URL`: URL base da HTTP API do backend. Stage `dev` já publicado em
+  `https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com`.
 
 ## INFRAESTRUTURA AWS
 
