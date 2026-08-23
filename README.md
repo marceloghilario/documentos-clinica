@@ -93,23 +93,20 @@ AWS_REGION=us-east-1 \
 aws s3 sync dist/ \
   s3://documentos-clinica-frontend-dev-909569945193 \
   --delete
-AWS_ACCESS_KEY_ID="$CLOUDPROAVANCO_AWS_ACCESS_KEY_ID" \
-AWS_SECRET_ACCESS_KEY="$CLOUDPROAVANCO_AWS_SECRET_ACCESS_KEY" \
-AWS_REGION=us-east-1 \
-aws s3 cp dist/documentos \
-  s3://documentos-clinica-frontend-dev-909569945193/documentos \
-  --content-type text/html
 ```
 
-O `postbuild` copia o `index.html` para o objeto sem extensão `documentos`,
-garantindo que a rota inicial do React Router seja servida com status `200`
-pelo endpoint website. O endpoint HTTP do site é:
+O `ErrorDocument` serve o `index.html` como corpo para rotas profundas do React
+Router, então o aplicativo funciona normalmente ao acessar essas rotas. O S3,
+porém, mantém status HTTP `404` para objetos inexistentes, como
+`/documentos/abc123`. A correção definitiva é usar CloudFront com uma resposta
+customizada que converta `404` para `/index.html` com status `200`. O endpoint
+HTTP do site é:
 
 ```text
 http://documentos-clinica-frontend-dev-909569945193.s3-website-us-east-1.amazonaws.com
 ```
 
-HTTPS e distribuição via CloudFront são um TODO. Essa etapa exigirá
+HTTPS e distribuição via CloudFront continuam como TODO. Essa etapa exigirá
 permissões `cloudfront:*` para o usuário IAM de deploy.
 
 ## Modelo de dados
