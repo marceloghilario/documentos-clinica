@@ -1,0 +1,184 @@
+service: documentos-clinica
+
+frameworkVersion: '3'
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 256
+  timeout: 30
+  environment:
+    PATIENTS_TABLE: ${self:service}-patients-${self:provider.stage}
+    DOCUMENTS_TABLE: ${self:service}-documents-${self:provider.stage}
+    DOCUMENTS_BUCKET: ${self:service}-documents-${self:provider.stage}-${aws:accountId}
+  httpApi:
+    cors:
+      allowedOrigins:
+        - '*'
+      allowedHeaders:
+        - Content-Type
+      allowedMethods:
+        - GET
+        - POST
+        - DELETE
+        - OPTIONS
+      allowCredentials: false
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource:
+            - !GetAtt PatientsTable.Arn
+            - !GetAtt DocumentsTable.Arn
+            - !Sub '${PatientsTable.Arn}/index/*'
+            - !Sub '${DocumentsTable.Arn}/index/*'
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource:
+            - !Sub 'arn:aws:s3:::${self:provider.environment.DOCUMENTS_BUCKET}/*'
+
+functions:
+  createPatient:
+    handler: src/functions/patients/create.handler
+    events:
+      - httpApi:
+          path: /patients
+          method: post
+  listPatients:
+    handler: src/functions/patients/list.handler
+    events:
+      - httpApi:
+          path: /patients
+          method: get
+  getPatient:
+    handler: src/functions/patients/get.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}
+          method: get
+  deletePatient:
+    handler: src/functions/patients/delete.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}
+          method: delete
+  listDocuments:
+    handler: src/functions/documents/list.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents
+          method: get
+  getUploadUrl:
+    handler: src/functions/documents/getUploadUrl.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents/upload-url
+          method: post
+  completeMultipart:
+    handler: src/functions/documents/completeMultipart.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents/multipart/complete
+          method: post
+  createDocument:
+    handler: src/functions/documents/create.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents
+          method: post
+  getDownloadUrl:
+    handler: src/functions/documents/downloadUrl.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents/{documentId}/download-url
+          method: get
+  deleteDocument:
+    handler: src/functions/documents/delete.handler
+    events:
+      - httpApi:
+          path: /patients/{patientId}/documents/{documentId}
+          method: delete
+
+resources:
+  Resources:
+    PatientsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.PATIENTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: patientId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: patientId
+            KeyType: HASH
+    DocumentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DOCUMENTS_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: documentId
+            AttributeType: S
+          - AttributeName: patientId
+            AttributeType: S
+          - AttributeName: createdAt
+            AttributeType: S
+        KeySchema:
+          - AttributeName: documentId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: patientId-createdAt-index
+            KeySchema:
+              - AttributeName: patientId
+                KeyType: HASH
+              - AttributeName: createdAt
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+    DocumentsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.DOCUMENTS_BUCKET}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - HEAD
+              AllowedHeaders:
+                - '*'
+              AllowedOrigins:
+                - '*'
+              ExposedHeaders:
+                - ETag
+              MaxAge: 3000
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+  Outputs:
+    DocumentsBucketName:
+      Value: !Ref DocumentsBucket
+    PatientsTableName:
+      Value: !Ref PatientsTable
+    DocumentsTableName:
+      Value: !Ref DocumentsTable
