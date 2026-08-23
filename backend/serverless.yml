@@ -17,6 +17,7 @@ provider:
     PATIENTS_TABLE: ${self:service}-patients-${self:provider.stage}
     DOCUMENTS_TABLE: ${self:service}-documents-${self:provider.stage}
     DOCUMENTS_BUCKET: ${self:service}-documents-${self:provider.stage}-${aws:accountId}
+    FRONTEND_BUCKET: documentos-clinica-frontend-${sls:stage}-${aws:accountId}
   httpApi:
     cors:
       allowedOrigins:
@@ -175,9 +176,40 @@ resources:
           BlockPublicPolicy: true
           IgnorePublicAcls: true
           RestrictPublicBuckets: true
+    FrontendBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:provider.environment.FRONTEND_BUCKET}
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerPreferred
+    FrontendBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref FrontendBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: '*'
+              Action: s3:GetObject
+              Resource: !Sub '${FrontendBucket.Arn}/*'
   Outputs:
     DocumentsBucketName:
       Value: !Ref DocumentsBucket
+    FrontendBucketName:
+      Value: !Ref FrontendBucket
+    FrontendWebsiteUrl:
+      Value: !GetAtt FrontendBucket.WebsiteURL
     PatientsTableName:
       Value: !Ref PatientsTable
     DocumentsTableName:

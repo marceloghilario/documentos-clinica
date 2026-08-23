@@ -74,6 +74,44 @@ operações `s3:PutObject`, `s3:GetObject` e `s3:DeleteObject`. O fluxo
 multipart utiliza `s3:PutObject` para iniciar, enviar e concluir o upload,
 sem permissões adicionais de listagem ou aborto de multipart.
 
+O frontend é publicado no bucket S3
+`documentos-clinica-frontend-${stage}-${accountId}`, criado pela mesma stack.
+Esse bucket usa hospedagem estática com `index.html` como documento inicial e
+de erro, permitindo o fallback das rotas do React Router. Os quatro bloqueios
+de acesso público ficam desativados somente nesse bucket, que possui uma
+política pública exclusivamente para leitura (`s3:GetObject`). O bucket de
+documentos permanece privado.
+
+Para gerar e publicar o frontend:
+
+```bash
+cd frontend
+VITE_API_URL=https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com npm run build
+AWS_ACCESS_KEY_ID="$CLOUDPROAVANCO_AWS_ACCESS_KEY_ID" \
+AWS_SECRET_ACCESS_KEY="$CLOUDPROAVANCO_AWS_SECRET_ACCESS_KEY" \
+AWS_REGION=us-east-1 \
+aws s3 sync dist/ \
+  s3://documentos-clinica-frontend-dev-909569945193 \
+  --delete
+AWS_ACCESS_KEY_ID="$CLOUDPROAVANCO_AWS_ACCESS_KEY_ID" \
+AWS_SECRET_ACCESS_KEY="$CLOUDPROAVANCO_AWS_SECRET_ACCESS_KEY" \
+AWS_REGION=us-east-1 \
+aws s3 cp dist/documentos \
+  s3://documentos-clinica-frontend-dev-909569945193/documentos \
+  --content-type text/html
+```
+
+O `postbuild` copia o `index.html` para o objeto sem extensão `documentos`,
+garantindo que a rota inicial do React Router seja servida com status `200`
+pelo endpoint website. O endpoint HTTP do site é:
+
+```text
+http://documentos-clinica-frontend-dev-909569945193.s3-website-us-east-1.amazonaws.com
+```
+
+HTTPS e distribuição via CloudFront são um TODO. Essa etapa exigirá
+permissões `cloudfront:*` para o usuário IAM de deploy.
+
 ## Modelo de dados
 
 Um `Patient` temporário possui `patientId`, `nome`, `cpf`, `dataNascimento`,
