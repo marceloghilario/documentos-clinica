@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { X } from 'lucide-react';
 import { api, ApiError } from '../../services/api';
+import { formatCpf, isValidCpf, normalizeCpf } from '../../utils/cpf';
 import { useToast } from '../Toast';
 
 interface Props {
@@ -21,7 +22,7 @@ export default function PatientForm({ onClose, onCreated }: Props) {
   const { showError, showSuccess } = useToast();
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!form.nome.trim() || !/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(form.cpf)) {
+    if (!form.nome.trim() || !isValidCpf(form.cpf)) {
       showError('Informe nome e um CPF válido com 11 dígitos.');
       return;
     }
@@ -29,6 +30,7 @@ export default function PatientForm({ onClose, onCreated }: Props) {
     try {
       await api.createPatient({
         ...form,
+        cpf: normalizeCpf(form.cpf),
         dataNascimento: form.dataNascimento || undefined,
         responsavel: form.responsavel || undefined,
         telefone: form.telefone || undefined,
@@ -72,9 +74,15 @@ export default function PatientForm({ onClose, onCreated }: Props) {
             CPF
             <input
               required
+              maxLength={14}
               placeholder="000.000.000-00"
               value={form.cpf}
-              onChange={(e) => setForm({ ...form, cpf: e.target.value })}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  cpf: formatCpf(event.target.value),
+                }))
+              }
             />
           </label>
           <label>

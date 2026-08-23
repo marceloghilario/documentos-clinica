@@ -2,7 +2,12 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Upload } from 'lucide-react';
 import { api, ApiError } from '../services/api';
-import type { DocumentForm, DocumentType, UploadUrlResponse } from '../types';
+import type {
+  Document,
+  DocumentForm,
+  DocumentType,
+  UploadUrlResponse,
+} from '../types';
 import { SPECIALTIES } from '../utils/specialties';
 import { useToast } from './Toast';
 import { DOCUMENT_TYPE_LABELS } from '../utils/constants';
@@ -13,7 +18,7 @@ const initialForm = (tipo: DocumentType): DocumentForm => ({ tipo });
 interface Props {
   patientId: string;
   tipo: DocumentType;
-  onUploaded: () => void;
+  onUploaded: (document: Document) => void;
 }
 export default function DocumentUploadForm({
   patientId,
@@ -127,7 +132,7 @@ export default function DocumentUploadForm({
         throw new Error('URL de upload não recebida.');
       }
       setProgress('Salvando informações...');
-      await api.createDocument(patientId, {
+      const createdDocument = await api.createDocument(patientId, {
         ...form,
         tipo,
         s3Key: result.s3Key,
@@ -139,7 +144,7 @@ export default function DocumentUploadForm({
       setFile(null);
       setForm(initialForm(tipo));
       setProgress('');
-      onUploaded();
+      onUploaded(createdDocument);
     } catch (error) {
       setProgress('');
       showError(

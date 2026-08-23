@@ -12,11 +12,7 @@ export interface Patient {
 }
 
 export type DocumentType =
-  | 'NOTA_FISCAL'
-  | 'LISTA_PRESENCA'
-  | 'PEI'
-  | 'RELATORIOS'
-  | 'OUTROS';
+  'NOTA_FISCAL' | 'LISTA_PRESENCA' | 'PEI' | 'RELATORIOS' | 'OUTROS';
 
 export interface Document {
   documentId: string;

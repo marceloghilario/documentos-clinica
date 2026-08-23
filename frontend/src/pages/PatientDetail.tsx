@@ -6,6 +6,7 @@ import DocumentUploadForm from '../components/DocumentUploadForm';
 import { ApiError, api } from '../services/api';
 import type { Document, DocumentType, Patient } from '../types';
 import { DOCUMENT_TYPE_LABELS, DOCUMENT_TYPES } from '../utils/constants';
+import { formatCpf } from '../utils/cpf';
 import { useToast } from '../components/Toast';
 
 const formatDate = (value: string) =>
@@ -82,8 +83,10 @@ export default function PatientDetail() {
   const download = async (doc: Document) => {
     if (!patientId) return;
     try {
-      const result = await api.getDownloadUrl(patientId, doc.documentId);
-      window.open(result.downloadUrl, '_blank', 'noopener,noreferrer');
+      const downloadUrl =
+        doc.downloadUrl ??
+        (await api.getDownloadUrl(patientId, doc.documentId)).downloadUrl;
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       showError(
         error instanceof ApiError
@@ -92,6 +95,32 @@ export default function PatientDetail() {
       );
     }
   };
+  const handleUploaded = useCallback(
+    (createdDocument: Document) => {
+      setDocuments((items) => [
+        createdDocument,
+        ...items.filter(
+          (item) => item.documentId !== createdDocument.documentId,
+        ),
+      ]);
+
+      if (createdDocument.downloadUrl || !patientId) return;
+
+      void api
+        .getDownloadUrl(patientId, createdDocument.documentId)
+        .then(({ downloadUrl }) => {
+          setDocuments((items) =>
+            items.map((item) =>
+              item.documentId === createdDocument.documentId
+                ? { ...item, downloadUrl }
+                : item,
+            ),
+          );
+        })
+        .catch(() => undefined);
+    },
+    [patientId],
+  );
   const deletePatient = async () => {
     if (!patientId || !window.confirm('Excluir este paciente?')) return;
     try {
@@ -126,7 +155,7 @@ export default function PatientDetail() {
         <div>
           <h1 className="text-3xl font-bold">{patient.nome}</h1>
           <p className="mt-1 text-slate-500">
-            CPF: {patient.cpf}
+            CPF: {formatCpf(patient.cpf)}
             {patient.responsavel
               ? ` · Responsável: ${patient.responsavel}`
               : ''}
@@ -210,7 +239,7 @@ export default function PatientDetail() {
           key={active}
           patientId={patient.patientId}
           tipo={active}
-          onUploaded={() => void load()}
+          onUploaded={handleUploaded}
         />
       </div>
     </section>

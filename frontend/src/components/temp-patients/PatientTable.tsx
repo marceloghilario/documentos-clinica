@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight, UserRound } from 'lucide-react';
 import type { Patient } from '../../types';
+import { formatCpf } from '../../utils/cpf';
 // TEMPORÁRIO: tabela será substituída pelo componente da integração de pacientes.
 export default function PatientTable({ patients }: { patients: Patient[] }) {
   if (!patients.length)
@@ -34,7 +35,9 @@ export default function PatientTable({ patients }: { patients: Patient[] }) {
                   {patient.nome}
                 </Link>
               </td>
-              <td className="px-5 py-4 text-slate-600">{patient.cpf}</td>
+              <td className="px-5 py-4 text-slate-600">
+                {formatCpf(patient.cpf)}
+              </td>
               <td className="px-5 py-4 text-slate-600">
                 {patient.telefone || '—'}
               </td>
