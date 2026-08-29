@@ -80,7 +80,7 @@ Esse bucket usa hospedagem estática com `index.html` como documento inicial e
 de erro, permitindo o fallback das rotas do React Router. Os quatro bloqueios
 de acesso público ficam desativados somente nesse bucket, que possui uma
 política pública exclusivamente para leitura (`s3:GetObject`). O bucket de
-documentos permanece privado.
+documentos permanece privado e não é exposto pelo CloudFront.
 
 Para gerar e publicar o frontend:
 
@@ -93,21 +93,37 @@ AWS_REGION=us-east-1 \
 aws s3 sync dist/ \
   s3://documentos-clinica-frontend-dev-909569945193 \
   --delete
+AWS_ACCESS_KEY_ID="$CLOUDPROAVANCO_AWS_ACCESS_KEY_ID" \
+AWS_SECRET_ACCESS_KEY="$CLOUDPROAVANCO_AWS_SECRET_ACCESS_KEY" \
+AWS_REGION=us-east-1 \
+aws cloudfront create-invalidation \
+  --distribution-id E3SSHNETHE3D0V \
+  --paths "/*"
 ```
 
-O `ErrorDocument` serve o `index.html` como corpo para rotas profundas do React
-Router, então o aplicativo funciona normalmente ao acessar essas rotas. O S3,
-porém, mantém status HTTP `404` para objetos inexistentes, como
-`/documentos/abc123`. A correção definitiva é usar CloudFront com uma resposta
-customizada que converta `404` para `/index.html` com status `200`. O endpoint
-HTTP do site é:
+Depois da publicação, invalide o cache da distribuição CloudFront para que os
+novos assets sejam disponibilizados imediatamente. A URL recomendada para
+acessar a aplicação é:
+
+```text
+https://d1eai4tokv4mjy.cloudfront.net
+```
+
+A distribuição `E3SSHNETHE3D0V` usa como origem customizada o endpoint website
+HTTP do bucket S3 e redireciona HTTP para HTTPS. Os erros `403` e `404` são
+configurados para servir `/index.html` com status `200`, permitindo o
+funcionamento correto das rotas profundas do React Router.
+
+O endpoint website S3 continua disponível como origem e fallback:
 
 ```text
 http://documentos-clinica-frontend-dev-909569945193.s3-website-us-east-1.amazonaws.com
 ```
 
-HTTPS e distribuição via CloudFront continuam como TODO. Essa etapa exigirá
-permissões `cloudfront:*` para o usuário IAM de deploy.
+Ao acessar diretamente o endpoint S3, rotas profundas continuam retornando
+status HTTP `404`, embora o `ErrorDocument` entregue o `index.html` no corpo e
+o aplicativo funcione normalmente. Essa limitação não se aplica ao endpoint
+CloudFront, que converte esses erros para status `200`.
 
 ## Modelo de dados
 
