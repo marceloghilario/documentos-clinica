@@ -6,7 +6,7 @@ import PatientDetail from './pages/PatientDetail';
 export default function App() {
   return (
     <ToastProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Navigate to="/documentos" replace />} />

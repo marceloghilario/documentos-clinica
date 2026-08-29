@@ -112,6 +112,10 @@ VITE_API_URL=https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com \
 npm run build
 ```
 
+O `VITE_BASE_PATH` altera somente o caminho público dos assets. As rotas do
+aplicativo já usam o prefixo `/documentos`, portanto o router não utiliza
+`basename`.
+
 Depois da publicação, invalide o cache da distribuição CloudFront para que os
 novos assets sejam disponibilizados imediatamente. A URL recomendada para
 acessar a aplicação é:
