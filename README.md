@@ -101,6 +101,17 @@ aws cloudfront create-invalidation \
   --paths "/*"
 ```
 
+O build acima usa a raiz (`/`) por padrão e continua sendo o build usado no
+bucket S3/CloudFront. Para publicar o mesmo frontend sob o prefixo
+`/documentos/` no Nginx, use:
+
+```bash
+cd frontend
+VITE_BASE_PATH=/documentos/ \
+VITE_API_URL=https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com \
+npm run build
+```
+
 Depois da publicação, invalide o cache da distribuição CloudFront para que os
 novos assets sejam disponibilizados imediatamente. A URL recomendada para
 acessar a aplicação é:
