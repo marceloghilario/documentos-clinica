@@ -116,9 +116,63 @@ O `VITE_BASE_PATH` altera somente o caminho público dos assets. As rotas do
 aplicativo já usam o prefixo `/documentos`, portanto o router não utiliza
 `basename`.
 
-Depois da publicação, invalide o cache da distribuição CloudFront para que os
-novos assets sejam disponibilizados imediatamente. A URL recomendada para
-acessar a aplicação é:
+## URL de produção
+
+A aplicação está publicada em:
+
+```text
+https://adm-proavanco.com.br/documentos/
+```
+
+O domínio é servido por Nginx na instância EC2 `clinica-backend`
+(`i-07649d556b914c0fd`, região `sa-east-1`, conta `909569945193`), no arquivo
+`/etc/nginx/sites-available/clinica`. O build estático fica em
+`/var/www/documentos` e é servido por:
+
+```nginx
+location /documentos/ {
+    alias /var/www/documentos/;
+    try_files $uri $uri/ /documentos/index.html;
+}
+
+location = /documentos {
+    return 301 /documentos/;
+}
+```
+
+O acesso à instância é feito por EC2 Instance Connect com o usuário IAM
+`devin-deploy`. Para publicar uma nova versão, gere o build com
+`VITE_BASE_PATH=/documentos/`, envie o pacote para o bucket do frontend e baixe
+na instância por URL presigned:
+
+```bash
+cd frontend
+VITE_BASE_PATH=/documentos/ \
+VITE_API_URL=https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com \
+npm run build
+tar czf /tmp/documentos-dist.tgz -C dist .
+aws s3 cp /tmp/documentos-dist.tgz \
+  s3://documentos-clinica-frontend-dev-909569945193/deploy/documentos-dist.tgz \
+  --region us-east-1
+URL=$(aws s3 presign \
+  s3://documentos-clinica-frontend-dev-909569945193/deploy/documentos-dist.tgz \
+  --region us-east-1 --expires-in 1200)
+aws ec2-instance-connect send-ssh-public-key --region sa-east-1 \
+  --instance-id i-07649d556b914c0fd --instance-os-user ubuntu \
+  --availability-zone sa-east-1a --ssh-public-key "file://$HOME/.ssh/eic_key.pub"
+ssh -i ~/.ssh/eic_key ubuntu@52.67.138.187 "
+  curl -fsS -o /tmp/documentos-dist.tgz '$URL'
+  sudo rm -rf /var/www/documentos/*
+  sudo tar xzf /tmp/documentos-dist.tgz -C /var/www/documentos
+  sudo chown -R www-data:www-data /var/www/documentos"
+```
+
+O Nginx serve arquivos estáticos, portanto não é necessário recarregá-lo após
+uma nova publicação do build.
+
+Depois de publicar no bucket S3, invalide o cache da distribuição CloudFront
+para que os novos assets sejam disponibilizados imediatamente. A distribuição
+segue disponível como acesso alternativo:
 
 ```text
 https://d1eai4tokv4mjy.cloudfront.net
