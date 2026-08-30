@@ -126,6 +126,8 @@ resources:
   Resources:
     PatientsTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:provider.environment.PATIENTS_TABLE}
         BillingMode: PAY_PER_REQUEST
@@ -137,6 +139,8 @@ resources:
             KeyType: HASH
     DocumentsTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         TableName: ${self:provider.environment.DOCUMENTS_TABLE}
         BillingMode: PAY_PER_REQUEST
@@ -161,8 +165,21 @@ resources:
               ProjectionType: ALL
     DocumentsBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
+      UpdateReplacePolicy: Retain
       Properties:
         BucketName: ${self:provider.environment.DOCUMENTS_BUCKET}
+        VersioningConfiguration:
+          Status: Enabled
+        LifecycleConfiguration:
+          Rules:
+            - Id: ExpireOldVersions
+              Status: Enabled
+              NoncurrentVersionExpirationInDays: 365
+            - Id: AbortIncompleteUploads
+              Status: Enabled
+              AbortIncompleteMultipartUpload:
+                DaysAfterInitiation: 7
         CorsConfiguration:
           CorsRules:
             - AllowedMethods:
