@@ -3,14 +3,27 @@ import type { Specialty } from '../utils/specialties';
 export type DocumentType =
   'NOTA_FISCAL' | 'LISTA_PRESENCA' | 'PEI' | 'RELATORIOS' | 'OUTROS';
 
+export type PatientOrigin = 'MANUAL' | 'FINANCEIRO';
+
 export interface Patient {
   patientId: string;
   nome: string;
-  cpf: string;
+  cpf?: string;
   dataNascimento?: string;
   responsavel?: string;
   telefone?: string;
+  origem?: PatientOrigin;
+  origemId?: number;
+  convenio?: string;
   createdAt: string;
+}
+
+export interface FinanceiroPatient {
+  id: number;
+  nome: string;
+  cpf?: string;
+  convenio?: string;
+  ativo: boolean;
 }
 
 export interface Document {

@@ -155,7 +155,8 @@ export default function PatientDetail() {
         <div>
           <h1 className="text-3xl font-bold">{patient.nome}</h1>
           <p className="mt-1 text-slate-500">
-            CPF: {formatCpf(patient.cpf)}
+            CPF: {patient.cpf ? formatCpf(patient.cpf) : '—'}
+            {patient.convenio ? ` · Convênio: ${patient.convenio}` : ''}
             {patient.responsavel
               ? ` · Responsável: ${patient.responsavel}`
               : ''}

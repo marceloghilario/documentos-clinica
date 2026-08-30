@@ -17,6 +17,7 @@ export default function PatientTable({ patients }: { patients: Patient[] }) {
           <tr>
             <th className="px-5 py-3">Paciente</th>
             <th className="px-5 py-3">CPF</th>
+            <th className="px-5 py-3">Origem</th>
             <th className="px-5 py-3">Telefone</th>
             <th />
           </tr>
@@ -36,7 +37,10 @@ export default function PatientTable({ patients }: { patients: Patient[] }) {
                 </Link>
               </td>
               <td className="px-5 py-4 text-slate-600">
-                {formatCpf(patient.cpf)}
+                {patient.cpf ? formatCpf(patient.cpf) : '—'}
+              </td>
+              <td className="px-5 py-4 text-slate-600">
+                {patient.origem === 'FINANCEIRO' ? 'Financeiro' : 'Manual'}
               </td>
               <td className="px-5 py-4 text-slate-600">
                 {patient.telefone || '—'}

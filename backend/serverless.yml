@@ -61,6 +61,12 @@ functions:
       - httpApi:
           path: /patients
           method: post
+  importPatient:
+    handler: src/functions/patients/import.handler
+    events:
+      - httpApi:
+          path: /patients/import
+          method: post
   listPatients:
     handler: src/functions/patients/list.handler
     events:

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, UserPlus, Users } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
+import FinanceiroPatientPicker from '../components/FinanceiroPatientPicker';
 import PatientForm from '../components/temp-patients/PatientForm';
 import PatientTable from '../components/temp-patients/PatientTable';
 import { ApiError, api } from '../services/api';
@@ -11,6 +12,7 @@ export default function Documents() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
   const { showError } = useToast();
   const load = useCallback(async () => {
     try {
@@ -42,10 +44,16 @@ export default function Documents() {
             Selecione um paciente para gerenciar seus anexos.
           </p>
         </div>
-        <button className="primary" onClick={() => setShowForm(true)}>
-          <Plus className="h-4 w-4" />
-          Inserir paciente
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button className="primary" onClick={() => setShowPicker(true)}>
+            <UserPlus className="h-4 w-4" />
+            Paciente do financeiro
+          </button>
+          <button className="secondary" onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4" />
+            Inserir paciente
+          </button>
+        </div>
       </div>
       <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
         <Users className="h-4 w-4 text-primary-600" />
@@ -56,6 +64,12 @@ export default function Documents() {
         <PatientForm
           onClose={() => setShowForm(false)}
           onCreated={() => void load()}
+        />
+      )}
+      {showPicker && (
+        <FinanceiroPatientPicker
+          onClose={() => setShowPicker(false)}
+          onAdded={() => void load()}
         />
       )}
     </section>

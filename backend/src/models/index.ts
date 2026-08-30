@@ -1,13 +1,20 @@
 import type { Specialty } from './specialties';
 
-// TEMPORÁRIO: será substituído pela integração real com o sistema de pacientes.
+export type PatientOrigin = 'MANUAL' | 'FINANCEIRO';
+
+// TEMPORÁRIO: o cadastro manual será substituído pela integração real com o
+// sistema de pacientes. Pacientes com origem FINANCEIRO vêm do sistema
+// financeiro e usam o patientId `fin-<id do financeiro>`.
 export interface Patient {
   patientId: string;
   nome: string;
-  cpf: string;
+  cpf?: string;
   dataNascimento?: string;
   responsavel?: string;
   telefone?: string;
+  origem?: PatientOrigin;
+  origemId?: number;
+  convenio?: string;
   createdAt: string;
 }
 

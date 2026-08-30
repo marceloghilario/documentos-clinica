@@ -10,6 +10,8 @@ import { documentService } from './documentService';
 import { docClient, TABLES } from '../utils/dynamo';
 import { HttpError } from '../utils/response';
 
+const financeiroPatientId = (origemId: number): string => `fin-${origemId}`;
+
 export const patientService = {
   async create(
     input: Omit<Patient, 'patientId' | 'createdAt'>,
@@ -17,6 +19,7 @@ export const patientService = {
     const patient: Patient = {
       ...input,
       patientId: uuid(),
+      origem: 'MANUAL',
       createdAt: new Date().toISOString(),
     };
     await docClient.send(
@@ -25,6 +28,29 @@ export const patientService = {
         Item: patient,
         ConditionExpression: 'attribute_not_exists(patientId)',
       }),
+    );
+    return patient;
+  },
+  async importFromFinanceiro(input: {
+    origemId: number;
+    nome: string;
+    cpf?: string;
+    convenio?: string;
+  }): Promise<Patient> {
+    const patientId = financeiroPatientId(input.origemId);
+    const existing = await docClient.send(
+      new GetCommand({ TableName: TABLES.PATIENTS, Key: { patientId } }),
+    );
+    const current = existing.Item as Patient | undefined;
+    const patient: Patient = {
+      ...current,
+      ...input,
+      patientId,
+      origem: 'FINANCEIRO',
+      createdAt: current?.createdAt ?? new Date().toISOString(),
+    };
+    await docClient.send(
+      new PutCommand({ TableName: TABLES.PATIENTS, Item: patient }),
     );
     return patient;
   },

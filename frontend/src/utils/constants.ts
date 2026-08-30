@@ -1,5 +1,8 @@
 import type { DocumentType } from '../types';
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
+// API do sistema financeiro, que fornece a lista oficial de pacientes.
+export const FINANCEIRO_API_URL =
+  import.meta.env.VITE_FINANCEIRO_API_URL ?? '/api';
 export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   NOTA_FISCAL: 'Nota Fiscal',
   LISTA_PRESENCA: 'Lista de Presença',

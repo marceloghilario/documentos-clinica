@@ -32,6 +32,21 @@ export const PatientSchema = z
     cpf: value.cpf.replace(/\D/g, ''),
   }));
 
+export const PatientImportSchema = z
+  .object({
+    origemId: z.number().int().positive(),
+    nome: z.string().trim().min(1, 'Nome é obrigatório').max(100),
+    cpf: z
+      .string()
+      .regex(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/, 'CPF deve conter 11 dígitos')
+      .optional(),
+    convenio: z.string().trim().max(100).optional(),
+  })
+  .transform((value) => ({
+    ...value,
+    cpf: value.cpf?.replace(/\D/g, ''),
+  }));
+
 export const UploadUrlSchema = z
   .object({
     ...common,

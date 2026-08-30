@@ -44,10 +44,31 @@ npm install
 npm run dev
 ```
 
-Variável de ambiente do frontend:
+Variáveis de ambiente do frontend:
 
 - `VITE_API_URL`: URL base da HTTP API do backend. Stage `dev` já publicado em
   `https://2mkhzotp5a.execute-api.us-east-1.amazonaws.com`.
+- `VITE_FINANCEIRO_API_URL`: URL base da API do sistema financeiro, usada para
+  listar os pacientes já cadastrados lá. O padrão é `/api`, que funciona quando
+  os dois apps são servidos pelo mesmo domínio
+  (`https://adm-proavanco.com.br`). Em outros hosts, use a URL absoluta
+  `https://adm-proavanco.com.br/api`.
+
+## Integração com os pacientes do financeiro
+
+A lista oficial de pacientes vem do sistema financeiro
+(`GET /api/patients`), que exige token JWT. O botão **Paciente do financeiro**
+pede e-mail e senha do próprio sistema financeiro (`POST /api/auth/login`),
+guarda o token no `localStorage` (`documentos.financeiro.token`) e exibe um
+combo com os pacientes cadastrados. Ao vincular um paciente, o backend de
+documentos grava uma cópia mínima (nome, CPF e convênio) via
+`POST /patients/import`, usando `patientId = fin-<id do financeiro>` e
+`origem = FINANCEIRO`; a operação é idempotente, então vincular o mesmo
+paciente novamente apenas atualiza os dados. Os documentos continuam sendo
+gravados sob esse `patientId`.
+
+O cadastro manual (`origem = MANUAL`) permanece disponível como fallback
+temporário e não depende do financeiro.
 
 ## INFRAESTRUTURA AWS
 
@@ -210,6 +231,7 @@ Todos os endpoints retornam `{ success, data }` em caso de sucesso e
 | Método | Endpoint                                                    | Descrição                         |
 | ------ | ----------------------------------------------------------- | --------------------------------- |
 | POST   | `/patients`                                                 | Cria paciente temporário          |
+| POST   | `/patients/import`                                          | Vincula paciente do financeiro    |
 | GET    | `/patients`                                                 | Lista pacientes                   |
 | GET    | `/patients/{patientId}`                                     | Busca paciente                    |
 | DELETE | `/patients/{patientId}`                                     | Exclui paciente sem documentos    |

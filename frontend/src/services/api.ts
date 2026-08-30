@@ -63,6 +63,12 @@ export const api = {
   listPatients: () => request<Patient[]>('/patients'),
   createPatient: (input: Omit<Patient, 'patientId' | 'createdAt'>) =>
     request<Patient>('/patients', { method: 'POST', body: input }),
+  importPatient: (input: {
+    origemId: number;
+    nome: string;
+    cpf?: string;
+    convenio?: string;
+  }) => request<Patient>('/patients/import', { method: 'POST', body: input }),
   getPatient: (id: string) => request<Patient>(`/patients/${id}`),
   deletePatient: (id: string) =>
     request<{ deleted: boolean }>(`/patients/${id}`, { method: 'DELETE' }),
